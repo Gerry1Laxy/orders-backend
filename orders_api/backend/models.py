@@ -1,5 +1,45 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+from rest_framework.authtoken.models import Token
+
+
+class User(AbstractUser):
+    USER_TYPE_CHOICES = (
+        ('shop', 'Магазин'),
+        ('buyer', 'Покупатель'),
+    )
+
+    # REQUIRED_FIELDS = []
+    # USERNAME_FIELD = 'email'
+
+    email = models.EmailField(max_length=255, unique=True)
+    type = models.CharField(max_length=5, choices=USER_TYPE_CHOICES)
+
+    groups = models.ManyToManyField(
+        'auth.Group',
+        blank=True,
+        related_name='backend_users',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        blank=True,
+        related_name='backend_users',
+    )
+    # tokens = models.ForeignKey(
+    #     Token,
+    #     on_delete=models.CASCADE,
+    #     related_name='owner'
+    # )
+
+
+# class Token(Token):
+#     # pass
+#     owner = models.ForeignKey(
+#         User,
+#         related_name='auth_tokens',
+#         on_delete=models.CASCADE,
+#     )
+    # created = models.DateTimeField(auto_now_add=True)
 
 
 class Shop(models.Model):

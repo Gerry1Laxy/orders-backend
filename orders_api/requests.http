@@ -1,0 +1,19 @@
+@baseUrl = http://localhost:8000/
+POST {{baseUrl}}user/register
+Content-Type: application/json
+
+{
+    "username": "jerry",
+    "password": "123412fg",
+    "email": "gerry@gmail.com",
+    "type": "buyer"
+}
+###
+POST {{baseUrl}}user/login
+Content-Type: application/json
+
+{
+    // "username": "jerry",
+    "email": "gerry@gmail.com",
+    "password": "123412fg"
+}
