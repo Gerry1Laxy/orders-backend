@@ -2,10 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 # from rest_framework.authtoken.models import Token
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.hashers import make_password
 from django.db.models import QuerySet
 
 from .models import User, Token
@@ -51,6 +52,8 @@ class LoginUser(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         user = authenticate(email=email, password=password)
+        if user:
+            print(user.password)
 
         if not user:
             return Response({'error': 'Invalid Credentials'},
@@ -67,3 +70,11 @@ class LoginUser(APIView):
     # def authenticate(self, email: str, password: str) -> User:
     #     user = User.objects.get(email=email)
     #     print(user)
+
+
+class DetailUpdateUser(RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user

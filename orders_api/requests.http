@@ -1,11 +1,13 @@
 @baseUrl = http://localhost:8000/
+@token = e42ad3ad48b2b9b1f3d7196d33be461efcd59bc5
+@token_2 = 01e5e93d1f40e0d3ea2b5ab8b176c28a4cf91ffd
 POST {{baseUrl}}user/register
 Content-Type: application/json
 
 {
-    "username": "jerry",
+    "username": "1jerry",
     "password": "123412fg",
-    "email": "gerry@gmail.com",
+    "email": "1gerry@gmail.com",
     "type": "buyer"
 }
 ###
@@ -15,5 +17,29 @@ Content-Type: application/json
 {
     // "username": "jerry",
     "email": "gerry@gmail.com",
+    "password": "1234123ff"
+}
+###
+POST {{baseUrl}}user/login
+Content-Type: application/json
+
+{
+    // "username": "jerry",
+    "email": "1gerry@gmail.com",
     "password": "123412fg"
+}
+###
+GET {{baseUrl}}user/1
+Content-Type: application/json
+Authorization: Token {{token}}
+
+###
+PATCH {{baseUrl}}user/1
+Content-Type: application/json
+Authorization: Token {{token_2}}
+
+{
+    "username": "jerry_2",
+    "type": "shop",
+    "password": "1234123ff"
 }
