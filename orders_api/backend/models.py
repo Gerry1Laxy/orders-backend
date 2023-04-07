@@ -69,9 +69,11 @@ class Product(models.Model):
 
 
 class ProductInfo(models.Model):
+    external_id = models.PositiveIntegerField()
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
+    model = models.CharField()
     quantity = models.PositiveIntegerField()
     price = models.PositiveIntegerField()
     price_rrc = models.PositiveIntegerField()

@@ -1,15 +1,22 @@
+import yaml
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-# from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.models import Token
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import QuerySet
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 
-from .models import User, Token
+from .permissions import IsShop
+
+from .models import ProductInfo, ProductParameter, Shop, Category, Product, Parameter
 from .serializers import UserSerializer
 
 
@@ -78,3 +85,112 @@ class DetailUpdateUser(RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class PartnerUpdate(APIView):
+    permission_classes = [IsAuthenticated, IsShop]
+    
+    # def post(self, request):
+    #     return Response({'status': 'ok'})
+
+    def post(self, request):
+        # Load YAML data from request
+        data, error = self.get_yaml_data(request)
+        print(data)
+        if data is None:
+            return error
+
+        # create or get the shop
+        shop, _ = Shop.objects.get_or_create(
+            name=data['shop'], user_id=request.user.id
+        )
+
+        # create or update categories
+        for category in data['categories']:
+            category_object, _ = Category.objects.get_or_create(
+                id=category['id'], name=category['name']
+            )
+            category_object.shops.add(shop.id)
+            category_object.save()
+
+        # delete existing product info for the shop
+        ProductInfo.objects.filter(shop_id=shop.id).delete()
+
+        # create or update products and product info
+        for item in data['goods']:
+            product, _ = Product.objects.get_or_create(
+                name=item['name'], category_id=item['category']
+            )
+
+            product_info = ProductInfo.objects.create(
+                product_id=product.id,
+                external_id=item['id'],
+                model=item['model'],
+                price=item['price'],
+                price_rrc=item['price_rrc'],
+                quantity=item['quantity'],
+                shop_id=shop.id
+            )
+            for name, value in item['parameters'].items():
+                parameter_object, _ = Parameter.objects.get_or_create(name=name)
+                ProductParameter.objects.create(
+                    product_info_id=product_info.id,
+                    parameter_id=parameter_object.id,
+                    value=value
+                )
+
+        return Response({'status': True}, status=status.HTTP_200_OK)
+
+        # # Create or update Shop
+        # shop_data = {'name': data.get('shop')}
+        # shop_serializer = ShopSerializer(data=shop_data)
+        # if shop_serializer.is_valid():
+        #     shop, created = Shop.objects.update_or_create(name=shop_data['name'], defaults=shop_data)
+        # else:
+        #     return Response(shop_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # # Create or update Categories
+        # category_serializer = CategorySerializer(data=data.get('categories'), many=True)
+        # if category_serializer.is_valid():
+        #     categories = category_serializer.save()
+        # else:
+        #     return Response(category_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # # Create or update Products
+        # product_serializer = ProductSerializer(data=data.get('goods'), many=True)
+        # if product_serializer.is_valid():
+        #     for product_data in product_serializer.validated_data:
+        #         product_data['shop'] = shop.id
+        #         product_data['category'] = [category.id for category in categories if category.id == product_data['category']][0]
+        #         Product.objects.update_or_create(id=product_data['id'], defaults=product_data)
+        #     return Response({'message': 'Data updated successfully'}, status=status.HTTP_200_OK)
+        # else:
+        #     return Response(product_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # return Response({'status': 'ok'})
+
+    def get_yaml_data(self, request):
+        url = request.data.get('url')
+        file = request.data.get('file')
+        if url:
+            validate_url = URLValidator()
+            try:
+                validate_url(url)
+            except ValidationError as e:
+                return None, Response(
+                    {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                data = yaml.load(request.body, Loader=yaml.FullLoader)
+            except yaml.YAMLError as e:
+                return None, Response(
+                    {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
+        if file:
+            try:
+                with open(file, 'r') as f:
+                    data = yaml.safe_load(f)
+            except FileNotFoundError as e:
+                return None, Response(
+                    {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
+        return data, None

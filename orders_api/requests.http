@@ -1,14 +1,24 @@
 @baseUrl = http://localhost:8000/
-@token = e42ad3ad48b2b9b1f3d7196d33be461efcd59bc5
-@token_2 = 01e5e93d1f40e0d3ea2b5ab8b176c28a4cf91ffd
+@token_1 = 2ae228052d6f37be7ef507eac3d283a0c3d39a5e
+@token_2 = 5db55c40c55277a546455b25d171546ff8109b81
 POST {{baseUrl}}user/register
 Content-Type: application/json
 
 {
-    "username": "1jerry",
+    "username": "jerry",
     "password": "123412fg",
-    "email": "1gerry@gmail.com",
+    "email": "gerry@gmail.com",
     "type": "buyer"
+}
+###
+POST {{baseUrl}}user/register
+Content-Type: application/json
+
+{
+    "username": "jerry_1",
+    "password": "123412fg",
+    "email": "gerry_1@gmail.com",
+    "type": "shop"
 }
 ###
 POST {{baseUrl}}user/login
@@ -17,7 +27,7 @@ Content-Type: application/json
 {
     // "username": "jerry",
     "email": "gerry@gmail.com",
-    "password": "1234123ff"
+    "password": "123412fg"
 }
 ###
 POST {{baseUrl}}user/login
@@ -25,16 +35,16 @@ Content-Type: application/json
 
 {
     // "username": "jerry",
-    "email": "1gerry@gmail.com",
+    "email": "gerry_1@gmail.com",
     "password": "123412fg"
 }
 ###
 GET {{baseUrl}}user/1
 Content-Type: application/json
-Authorization: Token {{token}}
+Authorization: Token {{token_2}}
 
 ###
-PATCH {{baseUrl}}user/1
+PATCH {{baseUrl}}user/2
 Content-Type: application/json
 Authorization: Token {{token_2}}
 
@@ -42,4 +52,12 @@ Authorization: Token {{token_2}}
     "username": "jerry_2",
     "type": "shop",
     "password": "1234123ff"
+}
+###
+POST {{baseUrl}}partner/update
+Content-Type: application/json
+Authorization: Token {{token_2}}
+
+{
+    "file": "/home/jerry/netology_hw/netology_dplm/data/shop_1.yaml"
 }
