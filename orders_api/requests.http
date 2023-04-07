@@ -61,3 +61,12 @@ Authorization: Token {{token_2}}
 {
     "file": "/home/jerry/netology_hw/netology_dplm/data/shop_1.yaml"
 }
+###
+GET {{baseUrl}}categories
+Content-Type: application/json
+# Authorization: 
+###
+GET {{baseUrl}}shops
+Content-Type: application/json
+###
+GET {{baseUrl}}products?search=

@@ -90,8 +90,16 @@ class Parameter(models.Model):
 
 
 class ProductParameter(models.Model):
-    product_info = models.ForeignKey(ProductInfo, on_delete=models.CASCADE)
-    parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE)
+    product_info = models.ForeignKey(
+        ProductInfo,
+        related_name='product_parameters',
+        on_delete=models.CASCADE
+    )
+    parameter = models.ForeignKey(
+        Parameter,
+        related_name='product_parameters',
+        on_delete=models.CASCADE
+    )
     value = models.CharField(max_length=255)
 
     def __str__(self):

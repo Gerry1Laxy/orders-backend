@@ -1,16 +1,16 @@
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from .models import User
+from .models import Category, Product, ProductInfo, ProductParameter, Shop, User
 
 class UserSerializer(serializers.ModelSerializer):
     # password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             'id', 'username', 'email', 'password', 'type', 'first_name', 'last_name'
-        ]
+        )
         extra_kwargs = {'password': {'write_only': True}}
 
     def validate_password(self, value):
@@ -46,3 +46,46 @@ class UserSerializer(serializers.ModelSerializer):
                 setattr(instance, attr, value)
         instance.save()
         return instance
+
+
+class CatygorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+
+class ShopSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Shop
+        fields = '__all__'
+
+class ProductSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField()
+
+    class Meta:
+        model = Product
+        fields = ('name', 'category',)
+
+
+class ProductParameterSerializer(serializers.ModelSerializer):
+    parameter = serializers.StringRelatedField()
+
+    class Meta:
+        model = ProductParameter
+        fields = ('parameter', 'value',)
+
+
+class ProductInfoSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    product_parameters = ProductParameterSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = ProductInfo
+        # fields = (
+        #     'id', 'model', 'product', 'shop',
+        #     'quantity', 'price', 'price_rrc', 'product_parameters',
+        # )
+        fields = '__all__'
+        read_only_fields = ('id',)

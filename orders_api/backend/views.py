@@ -1,11 +1,13 @@
 import yaml
 
 from rest_framework.views import APIView
+from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.filters import OrderingFilter, SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
@@ -17,7 +19,7 @@ from django.core.exceptions import ValidationError
 from .permissions import IsShop
 
 from .models import ProductInfo, ProductParameter, Shop, Category, Product, Parameter
-from .serializers import UserSerializer
+from .serializers import CatygorySerializer, ProductInfoSerializer, ShopSerializer, UserSerializer
 
 
 class RegisterUser(APIView):
@@ -194,3 +196,27 @@ class PartnerUpdate(APIView):
                     {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
                 )
         return data, None
+
+
+class CategoryListView(ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CatygorySerializer
+
+
+class ShopListView(ListAPIView):
+    queryset = Shop.objects.all()
+    serializer_class = ShopSerializer
+
+
+class ProductInfoListView(ListAPIView):
+    queryset = ProductInfo.objects.all()
+    serializer_class = ProductInfoSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_fields = ['shop_id', 'product__category_id']
+    ordering_fields = ['price', 'quantity']
+    search_fields = ['product__name', 'product__category__name']
+
+    def get_queryset(self):
+        queryset = ProductInfo.objects.all()
+        queryset = self.filter_queryset(queryset)
+        return queryset

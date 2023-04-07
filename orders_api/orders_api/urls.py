@@ -16,7 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from backend.views import DetailUpdateUser, LoginUser, PartnerUpdate, RegisterUser
+from backend.views import (
+    CategoryListView,
+    DetailUpdateUser,
+    LoginUser,
+    PartnerUpdate,
+    ProductInfoListView,
+    RegisterUser,
+    ShopListView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +32,7 @@ urlpatterns = [
     path('user/login', LoginUser.as_view(), name='login-user'),
     path('user/<int:pk>', DetailUpdateUser.as_view(), name='detail-user'),
     path('partner/update', PartnerUpdate.as_view(), name='partner-update'),
+    path('categories', CategoryListView.as_view(), name='categories'),
+    path('shops', ShopListView.as_view(), name='shops'),
+    path('products', ProductInfoListView.as_view(), name='products'),
 ]
