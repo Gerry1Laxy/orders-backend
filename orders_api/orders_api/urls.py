@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from backend.views import (
+    BasketView,
     CategoryListView,
+    ContactView,
     DetailUpdateUser,
     LoginUser,
+    PartnerOrderListView,
+    PartnerStatus,
     PartnerUpdate,
     ProductInfoListView,
     RegisterUser,
@@ -35,4 +39,8 @@ urlpatterns = [
     path('categories', CategoryListView.as_view(), name='categories'),
     path('shops', ShopListView.as_view(), name='shops'),
     path('products', ProductInfoListView.as_view(), name='products'),
+    path('basket', BasketView.as_view(), name='basket'),
+    path('partner/status', PartnerStatus.as_view(), name='partner-status'),
+    path('partner/orders', PartnerOrderListView.as_view(), name='partner-orders'),
+    path('user/contact', ContactView.as_view(), name='user-contact'),
 ]

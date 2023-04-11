@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:8000/
-@token_1 = 2ae228052d6f37be7ef507eac3d283a0c3d39a5e
-@token_2 = 5db55c40c55277a546455b25d171546ff8109b81
+@token_1 = 2e2e3f3f96e5784cd8f43f1a0063fad1f0eabf24
+@token_2 = 96e5a312367a4b2b43d9467728ffd88c447f29e5
 POST {{baseUrl}}user/register
 Content-Type: application/json
 
@@ -70,3 +70,89 @@ GET {{baseUrl}}shops
 Content-Type: application/json
 ###
 GET {{baseUrl}}products?search=
+###
+GET {{baseUrl}}basket
+Content-Type: application/json
+Authorization: Token {{token_1}}
+###
+POST {{baseUrl}}basket
+Content-Type: application/json
+Authorization: Token {{token_1}}
+
+{
+    "items": [
+        {
+            "product_info": 5,
+            "quantity": 2
+        },
+        {
+            "product_info": 6,
+            "quantity": 1
+        }
+    ]
+}
+###
+PUT {{baseUrl}}basket
+Content-Type: application/json
+Authorization: Token {{token_1}}
+
+{
+    "id": 7,
+    "items": [
+        {
+            "product_info": 3,
+            "quantity": 3
+        }
+    ]
+}
+###
+DELETE {{baseUrl}}basket
+Content-Type: application/json
+Authorization: Token {{token_1}}
+###
+GET {{baseUrl}}partner/status
+Content-Type: application/json
+Authorization: Token {{token_2}}
+###
+POST {{baseUrl}}partner/status
+Content-Type: application/json
+Authorization: Token {{token_2}}
+
+{
+    "status": "True"
+}
+###
+GET {{baseUrl}}partner/orders
+Content-Type: application/json
+Authorization: Token {{token_2}}
+###
+GET {{baseUrl}}user/contact
+Content-Type: application/json
+Authorization: Token {{token_1}}
+###
+POST {{baseUrl}}user/contact
+Content-Type: application/json
+Authorization: Token {{token_1}}
+
+{
+    "type": "address",
+    "value": "Moscow, Mayakovsky st., 12a"
+}
+###
+PUT {{baseUrl}}user/contact
+Content-Type: application/json
+Authorization: Token {{token_1}}
+
+{
+    "id": 1,
+    "type": "email",
+    "value": "jerry_put@gmail.com"
+}
+###
+DELETE {{baseUrl}}user/contact
+Content-Type: application/json
+Authorization: Token {{token_1}}
+
+{
+    "id": 1
+}

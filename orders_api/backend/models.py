@@ -44,8 +44,12 @@ class User(AbstractUser):
 
 class Shop(models.Model):
     name = models.CharField(max_length=255)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    url = models.URLField()
+    user = models.ForeignKey(
+        User,
+        related_name='shop',
+        on_delete=models.CASCADE
+    )
+    url = models.URLField(default='')
     filename = models.CharField(max_length=255)
 
     def __str__(self):
@@ -119,16 +123,29 @@ class Order(models.Model):
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     dt = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=255, choices=STATE_CHOICES)
+    status = models.CharField(
+        max_length=255,
+        choices=STATE_CHOICES,
+        default='basket'
+    )
 
     def __str__(self):
         return f'Order {self.pk} ({self.user.username})'
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
+    order = models.ForeignKey(
+        Order,
+        related_name='items',
+        on_delete=models.CASCADE
+    )
+    # product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    # shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
+    product_info = models.ForeignKey(
+        ProductInfo,
+        related_name='ordered_items',
+        on_delete=models.CASCADE
+    )
     quantity = models.IntegerField()
 
     def __str__(self):
@@ -143,7 +160,11 @@ class Contact(models.Model):
     )
 
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User,
+        related_name='contact',
+        on_delete=models.CASCADE
+    )
     value = models.CharField(max_length=255)
 
     def __str__(self):

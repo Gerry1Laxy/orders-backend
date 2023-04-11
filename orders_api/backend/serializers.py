@@ -1,7 +1,17 @@
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from .models import Category, Product, ProductInfo, ProductParameter, Shop, User
+from .models import (
+    Category,
+    Contact,
+    Order,
+    OrderItem,
+    Product,
+    ProductInfo,
+    ProductParameter,
+    Shop,
+    User
+)
 
 class UserSerializer(serializers.ModelSerializer):
     # password = serializers.CharField(write_only=True)
@@ -89,3 +99,48 @@ class ProductInfoSerializer(serializers.ModelSerializer):
         # )
         fields = '__all__'
         read_only_fields = ('id',)
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ('product_info', 'quantity')
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+    total_sum = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order 
+        fields = ('id', 'user', 'items', 'total_sum', 'dt', 'status')
+        read_only_fields = ('id', 'user', 'total_sum')
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        order = Order.objects.create(**validated_data)
+        for item_data in items_data:
+            OrderItem.objects.create(order=order, **item_data)
+        return order
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items')
+        instance.items.all().delete()
+        for item_data in items_data:
+            OrderItem.objects.create(order=instance, **item_data)
+        return instance
+    
+    def get_total_sum(self, obj):
+        return sum(
+            item.quantity * item.product_info.price
+            for item in obj.items.all()
+        )
+
+
+class ContactSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Contact
+        # fields = ('id', 'type', 'value',)
+        fields = '__all__'
+        read_only_fields = ('id', 'user')

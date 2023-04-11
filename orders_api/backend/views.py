@@ -1,3 +1,4 @@
+from distutils.util import strtobool
 import yaml
 
 from rest_framework.views import APIView
@@ -15,11 +16,12 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import QuerySet
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 
 from .permissions import IsShop
 
-from .models import ProductInfo, ProductParameter, Shop, Category, Product, Parameter
-from .serializers import CatygorySerializer, ProductInfoSerializer, ShopSerializer, UserSerializer
+from .models import Contact, Order, ProductInfo, ProductParameter, Shop, Category, Product, Parameter
+from .serializers import CatygorySerializer, ContactSerializer, OrderSerializer, ProductInfoSerializer, ShopSerializer, UserSerializer
 
 
 class RegisterUser(APIView):
@@ -220,3 +222,119 @@ class ProductInfoListView(ListAPIView):
         queryset = ProductInfo.objects.all()
         queryset = self.filter_queryset(queryset)
         return queryset
+
+
+class BasketView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = OrderSerializer
+
+    def get(self, request):
+        basket = Order.objects.filter(
+            user=request.user, status='basket'
+        ).all()
+        if basket is None:
+            return Response(
+                {'error': 'basket not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.serializer_class(basket, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request):
+        basket = Order.objects.filter(user=request.user).first()
+        if basket is None:
+            return Response(
+                {'error': 'basket not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.serializer_class(data=request.data, instance=basket)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request):
+        basket = Order.objects.filter(user=request.user).first()
+        if basket is None:
+            return Response(
+                {'error': 'basket not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        basket.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PartnerStatus(APIView):
+    permission_classes = (IsAuthenticated, IsShop)
+    serializer_class = ShopSerializer
+
+    def get(self, request):
+        serializer = self.serializer_class(request.user.shop)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        status_shop = request.data.get('status')
+        if status_shop:
+            request.user.shop.update(status=strtobool(status_shop))
+            serializer = self.serializer_class(request.user.shop)
+            return Response(serializer.data)
+        else:
+            return Response(
+                {'error': 'required arguments are missing'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class PartnerOrderListView(ListAPIView):
+    permission_classes = (IsAuthenticated, IsShop)
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        queryset = Order.objects.filter(
+            items__product_info__shop__user__id=self.request.user.id
+        ).exclude(status='basket').distinct()
+        return queryset
+
+
+class ContactView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ContactSerializer
+
+    def get(self, request):
+        contacts = Contact.objects.filter(user=request.user)
+        serializer = self.serializer_class(contacts, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ContactSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        data = request.data.copy()
+        contact = get_object_or_404(
+            Contact, user=request.user, id=data.get('id')
+        )
+        serializer = self.serializer_class(
+            contact, data=data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request):
+        contact = get_object_or_404(
+            Contact, user=request.user, id=request.data.get('id')
+        )
+        contact.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
