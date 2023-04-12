@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    'django_rest_passwordreset',
 
     'backend',
 ]
@@ -147,3 +148,13 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'backend.User'
 AUTHENTICATION_BACKENDS = ['backend.backends.EmailBackend']
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_USE_TLS = True
+
+EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_HOST_USER = 'example@mail.ru'
+EMAIL_HOST_PASSWORD = 'example'
+EMAIL_PORT = '465'
+EMAIL_USE_SSL = True
+SERVER_EMAIL = EMAIL_HOST_USER

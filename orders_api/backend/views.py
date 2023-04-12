@@ -20,7 +20,8 @@ from django.shortcuts import get_object_or_404
 
 from .permissions import IsShop
 
-from .models import Contact, Order, ProductInfo, ProductParameter, Shop, Category, Product, Parameter
+from .signals import new_order, register_new_user
+from .models import ConfirmEmailToken, Contact, Order, ProductInfo, ProductParameter, Shop, Category, Product, Parameter
 from .serializers import CatygorySerializer, ContactSerializer, OrderSerializer, ProductInfoSerializer, ShopSerializer, UserSerializer
 
 
@@ -31,6 +32,10 @@ class RegisterUser(APIView):
             # password = make_password(serializer.validated_data['password'])
             # serializer.validated_data['password'] = password
             serializer.save()
+            register_new_user.send(
+                sender=self.__class__,
+                user_id=serializer.data.get('id')
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(
@@ -338,3 +343,61 @@ class ContactView(APIView):
         )
         contact.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OrderView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        queryset = Order.objects.filter(
+            user=request.user
+        )
+        serializer = OrderSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        order_id = request.data.get('id')
+        if order_id and type(order_id) == int:
+            order = Order.objects.filter(id=order_id)
+            if order:
+                is_update = order.update(status='new')
+            else:
+                return Response(
+                    {'error': 'order not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            if is_update:
+                new_order.send(sender=self.__class__, user_id=request.user.id)
+                return Response(
+                    {'status': 'order updated'},
+                    status=status.HTTP_200_OK
+                )
+        return Response(
+            {'error': 'bad request'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class ConfirmEmailView(APIView):
+    
+    def post(self, request):
+        email = request.data.get('email')
+        token = request.data.get('token')
+        if email and token:
+            token_instance = ConfirmEmailToken.objects.filter(
+                user__email=email,
+                token=token
+            ).first()
+            if token_instance:
+                token_instance.user.is_active = True
+                token_instance.user.save()
+                token_instance.delete()
+            else:
+                return Response(
+                    {'error': 'token not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        return Response(
+            {'error': 'requered email and token'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

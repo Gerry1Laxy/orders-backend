@@ -19,9 +19,11 @@ from django.urls import path
 from backend.views import (
     BasketView,
     CategoryListView,
+    ConfirmEmailView,
     ContactView,
     DetailUpdateUser,
     LoginUser,
+    OrderView,
     PartnerOrderListView,
     PartnerStatus,
     PartnerUpdate,
@@ -29,18 +31,29 @@ from backend.views import (
     RegisterUser,
     ShopListView
 )
+from django_rest_passwordreset.views import (
+    reset_password_request_token,
+    reset_password_confirm
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     path('user/register', RegisterUser.as_view(), name='reg-user'),
+    path('user/register/confirm', ConfirmEmailView.as_view(), name='reg-user-confirm'),
     path('user/login', LoginUser.as_view(), name='login-user'),
-    path('user/<int:pk>', DetailUpdateUser.as_view(), name='detail-user'),
-    path('partner/update', PartnerUpdate.as_view(), name='partner-update'),
+    path('user/contact', ContactView.as_view(), name='user-contact'),
+    path('user', DetailUpdateUser.as_view(), name='detail-user'),
+    path('user/password/reset', reset_password_request_token, name='password-reset'),
+    path('user/password/reset/confirm', reset_password_confirm, name='password-reset-confirm'),
+
     path('categories', CategoryListView.as_view(), name='categories'),
     path('shops', ShopListView.as_view(), name='shops'),
     path('products', ProductInfoListView.as_view(), name='products'),
     path('basket', BasketView.as_view(), name='basket'),
+    path('order', OrderView.as_view(), name='order'),
+
+    path('partner/update', PartnerUpdate.as_view(), name='partner-update'),
     path('partner/status', PartnerStatus.as_view(), name='partner-status'),
     path('partner/orders', PartnerOrderListView.as_view(), name='partner-orders'),
-    path('user/contact', ContactView.as_view(), name='user-contact'),
 ]

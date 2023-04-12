@@ -31,7 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
         user = User(
             username=validated_data['username'],
             email=validated_data['email'],
-            type=validated_data['type'],
+            type=validated_data.get('type', 'buyer'),
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
         )

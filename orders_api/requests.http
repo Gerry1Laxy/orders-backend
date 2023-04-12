@@ -21,12 +21,21 @@ Content-Type: application/json
     "type": "shop"
 }
 ###
+POST {{baseUrl}}user/register
+Content-Type: application/json
+
+{
+    "username": "jerry_3",
+    "password": "123412fg",
+    "email": "mr.john.milton@yandex.ru"
+}
+###
 POST {{baseUrl}}user/login
 Content-Type: application/json
 
 {
     // "username": "jerry",
-    "email": "gerry@gmail.com",
+    "email": "mr.john.milton@mail.ru",
     "password": "123412fg"
 }
 ###
@@ -39,19 +48,20 @@ Content-Type: application/json
     "password": "123412fg"
 }
 ###
-GET {{baseUrl}}user/1
+GET {{baseUrl}}user
 Content-Type: application/json
-Authorization: Token {{token_2}}
+Authorization: Token {{token_1}}
 
 ###
-PATCH {{baseUrl}}user/2
+PATCH {{baseUrl}}user
 Content-Type: application/json
-Authorization: Token {{token_2}}
+Authorization: Token {{token_1}}
 
 {
-    "username": "jerry_2",
-    "type": "shop",
-    "password": "1234123ff"
+    // "username": "jerry_2",
+    // "type": "shop",
+    // "password": "1234123ff"
+    "email": "mr.john@yandex.ru"
 }
 ###
 POST {{baseUrl}}partner/update
@@ -155,4 +165,33 @@ Authorization: Token {{token_1}}
 
 {
     "id": 1
+}
+###
+GET {{baseUrl}}order
+Content-Type: application/json
+Authorization: Token {{token_1}}
+###
+POST {{baseUrl}}order
+Content-Type: application/json
+Authorization: Token {{token_1}}
+
+{
+    "id": 10
+}
+###
+POST {{baseUrl}}user/password/reset
+Content-Type: application/json
+# Authorization: Token {{token_1}}
+
+{
+    "email": "mr.john.milton@yandex.ru"
+}
+###
+POST {{baseUrl}}user/password/reset/confirm
+Content-Type: application/json
+# Authorization: Token {{token_1}}
+
+{
+    "token": "Token",
+    "password": "example"
 }
