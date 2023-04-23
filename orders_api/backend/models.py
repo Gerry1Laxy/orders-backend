@@ -50,13 +50,14 @@ class User(AbstractUser):
 
 class Shop(models.Model):
     name = models.CharField(max_length=255)
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
         related_name='shop',
         on_delete=models.CASCADE
     )
     url = models.URLField(default='')
-    filename = models.CharField(max_length=255)
+    filename = models.CharField(max_length=255, default='')
+    status = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -98,7 +99,7 @@ class ProductInfo(models.Model):
         on_delete=models.CASCADE
     )
     name = models.CharField(max_length=255)
-    model = models.CharField()
+    model = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField()
     price = models.PositiveIntegerField()
     price_rrc = models.PositiveIntegerField()

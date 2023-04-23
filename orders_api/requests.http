@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8000/
-@token_1 = 2e2e3f3f96e5784cd8f43f1a0063fad1f0eabf24
+@token_1 = 9c64199fb54411c8f7939bbe177c5c68df84c909
 @token_2 = 96e5a312367a4b2b43d9467728ffd88c447f29e5
 POST {{baseUrl}}user/register
 Content-Type: application/json
@@ -35,7 +35,7 @@ Content-Type: application/json
 
 {
     // "username": "jerry",
-    "email": "mr.john.milton@mail.ru",
+    "email": "mr.john.milton@yandex.ru",
     "password": "123412fg"
 }
 ###
@@ -59,14 +59,14 @@ Authorization: Token {{token_1}}
 
 {
     // "username": "jerry_2",
-    // "type": "shop",
+    "type": "shop"
     // "password": "1234123ff"
-    "email": "mr.john@yandex.ru"
+    // "email": "mr.john@yandex.ru"
 }
 ###
 POST {{baseUrl}}partner/update
 Content-Type: application/json
-Authorization: Token {{token_2}}
+Authorization: Token {{token_1}}
 
 {
     "file": "/home/jerry/netology_hw/netology_dplm/data/shop_1.yaml"
@@ -92,11 +92,11 @@ Authorization: Token {{token_1}}
 {
     "items": [
         {
-            "product_info": 5,
+            "product_info": 1,
             "quantity": 2
         },
         {
-            "product_info": 6,
+            "product_info": 2,
             "quantity": 1
         }
     ]
@@ -122,11 +122,11 @@ Authorization: Token {{token_1}}
 ###
 GET {{baseUrl}}partner/status
 Content-Type: application/json
-Authorization: Token {{token_2}}
+Authorization: Token {{token_1}}
 ###
 POST {{baseUrl}}partner/status
 Content-Type: application/json
-Authorization: Token {{token_2}}
+Authorization: Token {{token_1}}
 
 {
     "status": "True"
@@ -176,7 +176,16 @@ Content-Type: application/json
 Authorization: Token {{token_1}}
 
 {
-    "id": 10
+    "id": 1
+}
+###
+POST {{baseUrl}}user/register/confirm
+Content-Type: application/json
+# Authorization: Token {{token_1}}
+
+{
+    "email": "mr.john.milton@yandex.ru",
+    "token": "example"
 }
 ###
 POST {{baseUrl}}user/password/reset
@@ -195,3 +204,12 @@ Content-Type: application/json
     "token": "Token",
     "password": "example"
 }
+###
+POST {{baseUrl}}accounts/yandex/login/
+Content-Type: application/json
+# Authorization: Token {{token_1}}
+
+# {
+#     "username": "",
+#     "password": ""
+# }

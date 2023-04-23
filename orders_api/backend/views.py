@@ -1,7 +1,9 @@
+from datetime import datetime
 from distutils.util import strtobool
 import yaml
 
 from rest_framework.views import APIView
+from rest_framework import viewsets
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,24 +20,54 @@ from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 
+from backend.tasks import send_mail_task
 from .permissions import IsShop
 
-from .signals import new_order, register_new_user
-from .models import ConfirmEmailToken, Contact, Order, ProductInfo, ProductParameter, Shop, Category, Product, Parameter
-from .serializers import CatygorySerializer, ContactSerializer, OrderSerializer, ProductInfoSerializer, ShopSerializer, UserSerializer
+from .models import (
+    ConfirmEmailToken,
+    Contact,
+    Order,
+    ProductInfo,
+    ProductParameter,
+    Shop,
+    Category,
+    Product,
+    Parameter
+)
+from .serializers import (
+    CatygorySerializer,
+    ContactSerializer,
+    OrderSerializer,
+    ProductInfoSerializer,
+    ShopSerializer,
+    UserSerializer
+)
 
 
 class RegisterUser(APIView):
+    """
+    This view registers a new user
+    by accepting a POST request with the user's details.
+    """
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             # password = make_password(serializer.validated_data['password'])
             # serializer.validated_data['password'] = password
             serializer.save()
-            register_new_user.send(
-                sender=self.__class__,
+
+            token, _ = ConfirmEmailToken.objects.get_or_create(
                 user_id=serializer.data.get('id')
             )
+            send_mail_task.delay(
+                f'Confirm email for {token.user.username}',
+                token.token,
+                token.user.email
+            )
+            # register_new_user.send(
+            #     sender=self.__class__,
+            #     user_id=serializer.data.get('id')
+            # )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(
@@ -59,6 +91,10 @@ class RegisterUser(APIView):
 
 
 class LoginUser(APIView):
+    """
+    Authenticate a user with email and password,
+    return a token to be used for further requests.
+    """
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -89,6 +125,9 @@ class LoginUser(APIView):
 
 
 class DetailUpdateUser(RetrieveUpdateAPIView):
+    """
+    This view is used for retrieving and updating a user's details.
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
 
@@ -97,6 +136,12 @@ class DetailUpdateUser(RetrieveUpdateAPIView):
 
 
 class PartnerUpdate(APIView):
+    """
+    View to update a partner's shop with product information.
+   
+    Request Parameters:
+    - YAML data containing information about the products to update. 
+    """
     permission_classes = [IsAuthenticated, IsShop]
     
     # def post(self, request):
@@ -206,16 +251,34 @@ class PartnerUpdate(APIView):
 
 
 class CategoryListView(ListAPIView):
+    """
+    API view that returns a list of all categories.
+    """
     queryset = Category.objects.all()
     serializer_class = CatygorySerializer
 
 
-class ShopListView(ListAPIView):
+# class ShopListView(ListAPIView):
+#     """
+#     API view that returns a list of all shops.
+#     """
+#     queryset = Shop.objects.all()
+#     serializer_class = ShopSerializer
+
+
+class ShopListRetrieveViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API viewset that provides list and retrieve actions for Shop model.
+    """
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
 
 
 class ProductInfoListView(ListAPIView):
+    """
+    API view that returns a list of products
+    with optional filtering, ordering, and searching.
+    """
     queryset = ProductInfo.objects.all()
     serializer_class = ProductInfoSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -230,6 +293,14 @@ class ProductInfoListView(ListAPIView):
 
 
 class BasketView(APIView):
+    """
+    API view for managing the user's shopping basket.
+
+    GET: Retrieves the items in the user's basket.
+    POST: Adds an item to the user's basket.
+    PUT: Updates an item in the user's basket.
+    DELETE: Deletes the user's basket.
+    """
     permission_classes = (IsAuthenticated,)
     serializer_class = OrderSerializer
 
@@ -278,17 +349,22 @@ class BasketView(APIView):
 
 
 class PartnerStatus(APIView):
+    """
+    API view to get or update the status of a shop.
+    """
     permission_classes = (IsAuthenticated, IsShop)
     serializer_class = ShopSerializer
 
     def get(self, request):
+        print(request.user.shop)
         serializer = self.serializer_class(request.user.shop)
         return Response(serializer.data)
     
     def post(self, request):
         status_shop = request.data.get('status')
         if status_shop:
-            request.user.shop.update(status=strtobool(status_shop))
+            # request.user.shop.update(status=strtobool(status_shop))
+            request.user.shop.status = strtobool(status_shop)
             serializer = self.serializer_class(request.user.shop)
             return Response(serializer.data)
         else:
@@ -299,6 +375,9 @@ class PartnerStatus(APIView):
 
 
 class PartnerOrderListView(ListAPIView):
+    """
+    API view that returns a list of orders that belong to the partner.
+    """
     permission_classes = (IsAuthenticated, IsShop)
     serializer_class = OrderSerializer
 
@@ -310,6 +389,14 @@ class PartnerOrderListView(ListAPIView):
 
 
 class ContactView(APIView):
+    """
+    API view for managing contacts associated with the authenticated user.
+
+    GET: Returns a list of all contacts.
+    POST: Creates a new contact.
+    PUT: Updates an existing contact.
+    DELETE: Deletes an existing contact.
+    """
     permission_classes = (IsAuthenticated,)
     serializer_class = ContactSerializer
 
@@ -346,6 +433,12 @@ class ContactView(APIView):
 
 
 class OrderView(APIView):
+    """
+    API view for retrieving and updating orders belonging to the authenticated user.
+
+    GET: Returns a list of orders associated with the authenticated user.
+    POST: Updates the status of a specific order to "new".
+    """
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
@@ -357,7 +450,16 @@ class OrderView(APIView):
 
     def post(self, request):
         order_id = request.data.get('id')
-        if order_id and type(order_id) == int:
+        if order_id:
+            if type(order_id) == int:
+                pass
+            elif order_id.isdigit():
+                order_id = int(order_id)
+            else:
+                return Response(
+                    {'error': 'bad request'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             order = Order.objects.filter(id=order_id)
             if order:
                 is_update = order.update(status='new')
@@ -367,18 +469,29 @@ class OrderView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             if is_update:
-                new_order.send(sender=self.__class__, user_id=request.user.id)
+
+                start = datetime.now()
+                send_mail_task.delay(
+                    'New status for order',
+                    'Order status changed to new',
+                    request.user.email
+                )
+                print(datetime.now() - start)
+                # new_order.send(sender=self.__class__, user_id=request.user.id)
                 return Response(
                     {'status': 'order updated'},
                     status=status.HTTP_200_OK
                 )
         return Response(
-            {'error': 'bad request'},
+            {'error': 'id field required'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
 
 class ConfirmEmailView(APIView):
+    """
+    View to confirm the email address of a user by validating a token.
+    """
     
     def post(self, request):
         email = request.data.get('email')
@@ -392,6 +505,10 @@ class ConfirmEmailView(APIView):
                 token_instance.user.is_active = True
                 token_instance.user.save()
                 token_instance.delete()
+                return Response(
+                    {'status': 'success'},
+                    status=status.HTTP_200_OK
+                )
             else:
                 return Response(
                     {'error': 'token not found'},
